@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "project": {
+      "title": "Project",
+      "description": "A portfolio project entity",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "client": { "type": "string" },
+        "year": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "authorId": { "type": "string" }
+      },
+      "required": ["title", "category", "image", "createdAt", "authorId"]
+    },
+    "appConfig": {
+      "title": "App Config",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "modelUrl": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["modelUrl", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": { "$ref": "project" },
+      "description": "Portfolio projects to showcase"
+    },
+    "/configs/{configId}": {
+      "schema": { "$ref": "appConfig" },
+      "description": "Application configuration"
+    }
+  }
+}

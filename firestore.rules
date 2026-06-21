@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Definition
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && request.auth.token.email_verified == true && request.auth.token.email == 'photobackup1246@gmail.com';
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['title', 'category', 'image', 'createdAt', 'authorId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 100 &&
+             data.image is string && data.image.size() > 0 && data.image.size() <= 500 &&
+             data.createdAt == request.time &&
+             data.authorId is string && data.authorId == request.auth.uid &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 3000)) &&
+             (!('client' in data) || (data.client is string && data.client.size() <= 150)) &&
+             (!('year' in data) || (data.year is string && data.year.size() <= 10));
+    }
+
+    function isValidConfig(data) {
+      return data.keys().hasAll(['modelUrl', 'updatedAt']) &&
+             data.modelUrl is string && data.modelUrl.size() <= 1000 &&
+             data.updatedAt == request.time;
+    }
+
+    match /projects/{projectId} {
+      // Allow read for everyone (even unauthenticated) so they can see the portfolio
+      allow read: if true;
+      allow list: if true;
+
+      // Only Admin can create and delete projects
+      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
+      
+      allow update: if isAdmin() && isValidId(projectId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'image', 'description', 'client', 'year']) &&
+        incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 150 &&
+        incoming().category is string && incoming().category.size() > 0 && incoming().category.size() <= 100 &&
+        incoming().image is string && incoming().image.size() > 0 && incoming().image.size() <= 500 &&
+        (!('description' in incoming()) || (incoming().description is string && incoming().description.size() <= 3000)) &&
+        (!('client' in incoming()) || (incoming().client is string && incoming().client.size() <= 150)) &&
+        (!('year' in incoming()) || (incoming().year is string && incoming().year.size() <= 10))
+      );
+
+      allow delete: if isAdmin() && isValidId(projectId);
+    }
+
+    match /configs/{configId} {
+      allow read: if true;
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(configId) && isValidConfig(incoming());
+      allow update: if isAdmin() && isValidId(configId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['modelUrl', 'updatedAt']) &&
+        incoming().modelUrl is string && incoming().modelUrl.size() <= 1000 &&
+        incoming().updatedAt == request.time
+      );
+      allow delete: if isAdmin() && isValidId(configId);
+    }
+  }
+}
