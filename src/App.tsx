@@ -7,7 +7,7 @@ import { Menu, X, ArrowRight, ArrowUp, Instagram, Facebook, Linkedin, Star, Chec
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Float, MeshDistortMaterial, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
-import { BrowserRouter, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { subscribeProjects, auth, onAuthStateChanged, getLocalProjects } from './lib/firebase';
 
 const WHATSAPP_NUMBER = '917020705148';
@@ -1470,9 +1470,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-stone-900 selection:bg-[#f97316]/20 relative">
-      <BrowserRouter>
+      <HashRouter>
         <LayoutContainer scaleX={scaleX} />
-      </BrowserRouter>
+      </HashRouter>
     </div>
   );
 }
