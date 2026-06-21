@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense } from 'react';
 import { SignIn } from './components/Auth/SignIn';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { DashboardHome } from './components/Dashboard/DashboardHome';
@@ -362,8 +362,10 @@ const Hero = () => {
           <directionalLight position={[10, -10, 5]} color="#06b6d4" intensity={1.5} />
           {/* White spot light */}
           <spotLight position={[0, 10, 5]} angle={0.15} penumbra={1} intensity={1} castShadow />
-          <Environment preset="city" />
-          <AbstractArchitecture />
+          <Suspense fallback={null}>
+            <Environment preset="city" />
+            <AbstractArchitecture />
+          </Suspense>
         </Canvas>
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-b from-stone-950/60 via-stone-950/40 to-stone-950/80 z-0" />
