@@ -9,6 +9,12 @@ import { Environment, Float, MeshDistortMaterial, RoundedBox } from '@react-thre
 import * as THREE from 'three';
 import { HashRouter, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { subscribeProjects, auth, onAuthStateChanged, getLocalProjects } from './lib/firebase';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// Register ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
 
 const WHATSAPP_NUMBER = '917020705148';
 
@@ -361,9 +367,81 @@ const Hero = () => {
   const opacity = useTransform(scrollY, [0, 500], [1, 0]);
   const scale = useTransform(scrollY, [0, 500], [1, 0.95]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline();
+    
+    // Initial states
+    gsap.set(".hero-orange-line", { scaleX: 0, opacity: 0 });
+    gsap.set([".hero-sub", ".hero-title", ".hero-desc", ".hero-btn", ".hero-badge", ".hero-scroll"], {
+      opacity: 0,
+      y: 35
+    });
+    
+    gsap.set(".hero-bg-canvas", {
+      opacity: 0,
+      scale: 1.15
+    });
+
+    // Run Timeline
+    tl.to(".hero-bg-canvas", {
+      opacity: 0.5,
+      scale: 1,
+      duration: 2.0,
+      ease: "power3.out"
+    })
+    .to(".hero-orange-line", {
+      scaleX: 1,
+      opacity: 1,
+      duration: 1.2,
+      transformOrigin: "center",
+      ease: "power4.out"
+    }, "-=1.4")
+    .to(".hero-sub", {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power3.out"
+    }, "-=1.0")
+    .to(".hero-title", {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: "power4.out"
+    }, "-=0.8")
+    .to(".hero-desc", {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power3.out"
+    }, "-=0.6")
+    .to(".hero-btn", {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: "power3.out"
+    }, "-=0.4")
+    .to(".hero-badge", {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.1,
+      ease: "power3.out"
+    }, "-=0.3")
+    .to(".hero-scroll", {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power3.out"
+    }, "-=0.2");
+
+  }, { scope: containerRef });
+
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-stone-950">
-      <motion.div className="absolute inset-0 z-0 opacity-50" style={{ y: y1 }}>
+    <section ref={containerRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-stone-950">
+      <motion.div className="absolute inset-0 z-0 hero-bg-canvas" style={{ y: y1 }}>
         <Canvas camera={{ position: [0, 0, 8.5], fov: 45 }}>
           <ambientLight intensity={0.3} />
           <spotLight position={[-10, 15, 10]} color="#f97316" angle={0.25} penumbra={1} intensity={2} castShadow />
@@ -384,54 +462,29 @@ const Hero = () => {
         style={{ opacity, y: useTransform(scrollY, [0, 500], [0, 100]), scale }}
         className="relative z-10 text-center text-white px-6 max-w-5xl mx-auto mt-16"
       >
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: 80 }}
-          transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="h-px bg-[#f97316] mx-auto mb-10"
-        />
+        <div className="h-px bg-[#f97316] mx-auto mb-10 w-20 hero-orange-line" />
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-[0.65rem] tracking-[0.5em] text-[#f97316] uppercase mb-8 font-bold"
-        >
+        <p className="text-[0.65rem] tracking-[0.5em] text-[#f97316] uppercase mb-8 font-bold hero-sub">
           DPIIT-Recognised Design Studio
-        </motion.p>
+        </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl md:text-7xl lg:text-[6.5rem] font-serif font-medium leading-[1.0] mb-8 text-white"
-        >
+        <h1 className="text-5xl md:text-7xl lg:text-[6.5rem] font-serif font-medium leading-[1.0] mb-8 text-white hero-title">
           Elevating Spaces,{' '}
           <br className="hidden md:block" />
           <span className="italic text-stone-300 font-light">Enriching Lives</span>
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="text-base md:text-lg font-light tracking-wide mb-14 max-w-xl mx-auto text-stone-300/90 leading-relaxed"
-        >
+        <p className="text-base md:text-lg font-light tracking-wide mb-14 max-w-xl mx-auto text-stone-300/90 leading-relaxed hero-desc">
           Crafting timeless, structurally precise environments for the modern connoisseur.
-        </motion.p>
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.0 }}
-          className="flex flex-col sm:flex-row justify-center gap-5"
-        >
+        <div className="flex flex-col sm:flex-row justify-center gap-5">
           <motion.a
             href="#portfolio"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={(e) => { e.preventDefault(); document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="bg-white text-stone-900 px-12 py-4.5 font-medium text-sm tracking-[0.15em] hover:bg-[#f97316] hover:text-white transition-all duration-300 hover:shadow-2xl hover:shadow-[#f97316]/20"
+            className="bg-white text-stone-900 px-12 py-4.5 font-medium text-sm tracking-[0.15em] hover:bg-[#f97316] hover:text-white transition-all duration-300 hover:shadow-2xl hover:shadow-[#f97316]/20 hero-btn"
           >
             VIEW PORTFOLIO
           </motion.a>
@@ -440,37 +493,29 @@ const Hero = () => {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={(e) => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="border border-white/25 text-white px-12 py-4.5 font-medium text-sm tracking-[0.15em] hover:bg-white hover:text-stone-900 transition-all duration-300 backdrop-blur-sm"
+            className="border border-white/25 text-white px-12 py-4.5 font-medium text-sm tracking-[0.15em] hover:bg-white hover:text-stone-900 transition-all duration-300 backdrop-blur-sm hero-btn"
           >
             START YOUR PROJECT
           </motion.a>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Bottom feature badges */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.3, duration: 0.8 }}
-        className="absolute bottom-20 left-0 right-0 z-10 hidden lg:flex justify-center items-center gap-14 text-stone-500 text-[0.6rem] tracking-[0.3em] uppercase font-bold"
-      >
-        <span className="flex items-center gap-3">
+      <div className="absolute bottom-20 left-0 right-0 z-10 hidden lg:flex justify-center items-center gap-14 text-stone-500 text-[0.6rem] tracking-[0.3em] uppercase font-bold">
+        <span className="flex items-center gap-3 hero-badge">
           <span className="w-1 h-1 rounded-full bg-[#f97316]" /> Architectural Planning
         </span>
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-3 hero-badge">
           <span className="w-1 h-1 rounded-full bg-[#f97316]" /> Luxury Interiors
         </span>
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-3 hero-badge">
           <span className="w-1 h-1 rounded-full bg-[#f97316]" /> Turnkey Execution
         </span>
-      </motion.div>
+      </div>
 
       {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.8, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 cursor-pointer group"
+      <div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 cursor-pointer group hero-scroll"
         onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
       >
         <span className="text-[0.55rem] tracking-[0.3em] uppercase text-stone-500 font-medium group-hover:text-stone-300 transition-colors">Scroll</span>
@@ -481,46 +526,93 @@ const Hero = () => {
             className="w-1 h-1 rounded-full bg-[#f97316]"
           />
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 };
 
 // --- About ---
+// --- About ---
 const About = () => {
-  const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Parallax on the image inside its overflow-hidden parent
+    gsap.fromTo(".about-parallax-img", 
+      { yPercent: -12, scale: 1.2 },
+      {
+        yPercent: 12,
+        scale: 1.15,
+        scrollTrigger: {
+          trigger: ".about-image-wrapper",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true
+        },
+        ease: "none"
+      }
+    );
+
+    // Fade-in/slide-in of the image container itself
+    gsap.from(".about-image-wrapper", {
+      scrollTrigger: {
+        trigger: ".about-image-wrapper",
+        start: "top 85%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      x: -40,
+      filter: "blur(10px)",
+      duration: 1.2,
+      ease: "power3.out"
+    });
+
+    // Floating card delay reveal
+    gsap.from(".about-accent-card", {
+      scrollTrigger: {
+        trigger: ".about-image-wrapper",
+        start: "top 70%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 30,
+      duration: 1.0,
+      delay: 0.4,
+      ease: "power3.out"
+    });
+
+    // Text elements stagger reveal
+    gsap.from(".about-text-item", {
+      scrollTrigger: {
+        trigger: ".about-text-block",
+        start: "top 85%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: "power3.out"
+    });
+
+  }, { scope: containerRef });
 
   return (
     <section id="about" ref={containerRef} className="py-28 md:py-40 bg-[#F9F8F6] overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-16 lg:gap-28 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -40, filter: "blur(10px)" }}
-            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
-          >
+          <div className="relative about-image-wrapper">
             <div className="aspect-[3/4] overflow-hidden bg-stone-200 relative shadow-premium">
-              <motion.img
-                style={{ y, scale: 1.15 }}
+              <img
                 src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
                 alt="Interior Hub Storefront"
                 loading="lazy"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover about-parallax-img"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900/30 via-transparent to-transparent" />
             </div>
             {/* Floating accent card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="absolute -bottom-10 -right-6 lg:-right-10 bg-white p-8 shadow-premium max-w-sm hidden md:block"
-            >
+            <div className="absolute -bottom-10 -right-6 lg:-right-10 bg-white p-8 shadow-premium max-w-sm hidden md:block about-accent-card">
               <div className="flex items-center gap-1 mb-3">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={14} className="fill-[#f97316] text-[#f97316]" />
@@ -529,29 +621,19 @@ const About = () => {
               <p className="font-serif text-lg italic text-stone-800 leading-relaxed">
                 "Providing the finest materials—from marble sheets to wallpapers—for flawless execution."
               </p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.8 }}
-            >
+          <div className="about-text-block">
+            <div className="about-text-item">
               <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-[#f97316] mb-5 uppercase">About Us</span>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-8 text-stone-900 leading-[1.08]">
                 Dream Horizon <br />
                 <span className="italic text-stone-400">Design Concepts</span>
               </h2>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.15, duration: 0.8 }}
-            >
+            <div className="about-text-item">
               <p className="text-stone-600 leading-relaxed mb-6 text-lg">
                 As a DPIIT-recognised design and infrastructure company, Dream Horizon Design Concepts is your
                 comprehensive hub for visionary architectural planning and interior transformation.
@@ -560,15 +642,9 @@ const About = () => {
                 From structurally sound commercial edifices to bespoke private residences,
                 we bring architectural precision and refined interior finishes to every project, ensuring luxury and longevity.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="grid grid-cols-2 gap-10 mb-12"
-            >
+            <div className="grid grid-cols-2 gap-10 mb-12 about-text-item">
               <div className="relative pl-6 border-l-2 border-[#f97316]">
                 <AnimatedCounter target={150} suffix="+" />
                 <p className="text-xs text-stone-500 uppercase tracking-[0.2em] mt-3 font-medium">Projects Completed</p>
@@ -577,20 +653,16 @@ const About = () => {
                 <AnimatedCounter target={15} />
                 <p className="text-xs text-stone-500 uppercase tracking-[0.2em] mt-3 font-medium">Design Awards</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.a
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
+            <a
               href="#contact"
               onClick={(e) => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="inline-flex items-center text-stone-900 font-semibold hover:text-[#f97316] transition-colors group text-sm tracking-wide"
+              className="inline-flex items-center text-stone-900 font-semibold hover:text-[#f97316] transition-colors group text-sm tracking-wide about-text-item"
             >
               Learn More About Our Studio
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" />
-            </motion.a>
+            </a>
           </div>
         </div>
       </div>
@@ -606,30 +678,53 @@ const Sectors = () => {
     { title: "Public & Hospitality", image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80", description: "Immersive environments for hotels, resorts, educational facilities, and institutions." },
   ];
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Header reveal
+    gsap.from(".sector-header", {
+      scrollTrigger: {
+        trigger: ".sector-header",
+        start: "top 85%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 30,
+      duration: 1.0,
+      ease: "power3.out"
+    });
+
+    // Cards reveal with 3D perspective rotation
+    gsap.from(".sector-card", {
+      scrollTrigger: {
+        trigger: ".sector-cards-grid",
+        start: "top 80%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 55,
+      rotationY: 8,
+      duration: 1.2,
+      stagger: 0.15,
+      ease: "power3.out",
+      transformPerspective: 1000
+    });
+  }, { scope: containerRef });
+
   return (
-    <section className="py-28 bg-stone-950 text-white relative overflow-hidden noise-overlay">
+    <section ref={containerRef} className="py-28 bg-stone-950 text-white relative overflow-hidden noise-overlay">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(249,115,22,0.06),transparent_50%)]" />
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
-        >
+        <div className="text-center mb-20 sector-header">
           <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-[#f97316] mb-4 uppercase">Our Focus</span>
           <h2 className="text-4xl md:text-5xl font-serif">Architectural Sectors</h2>
-        </motion.div>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 sector-cards-grid">
           {sectors.map((sector, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.7, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="group relative aspect-[3/4] overflow-hidden bg-stone-900 rounded-2xl border border-stone-800/50 hover:border-[#f97316]/30 transition-all duration-700 cursor-pointer"
+              className="sector-card group relative aspect-[3/4] overflow-hidden bg-stone-900 rounded-2xl border border-stone-800/50 hover:border-[#f97316]/30 transition-all duration-700 cursor-pointer"
             >
               <img
                 src={sector.image}
@@ -650,7 +745,7 @@ const Sectors = () => {
                 <div className="absolute top-5 right-5 w-10 h-px bg-[#f97316]/60" />
                 <div className="absolute top-5 right-5 w-px h-10 bg-[#f97316]/60" />
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -658,6 +753,7 @@ const Sectors = () => {
   );
 };
 
+// --- Services ---
 // --- Services ---
 const Services = () => {
   const services = [
@@ -681,29 +777,50 @@ const Services = () => {
     }
   ];
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Header reveal
+    gsap.from(".services-header", {
+      scrollTrigger: {
+        trigger: ".services-header",
+        start: "top 85%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 30,
+      duration: 1.0,
+      ease: "power3.out"
+    });
+
+    // Cards reveal
+    gsap.from(".services-card", {
+      scrollTrigger: {
+        trigger: ".services-cards-grid",
+        start: "top 80%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 50,
+      duration: 1.2,
+      stagger: 0.15,
+      ease: "power3.out"
+    });
+  }, { scope: containerRef });
+
   return (
-    <section id="services" className="py-28 bg-white relative">
+    <section id="services" ref={containerRef} className="py-28 bg-white relative">
       <div className="max-w-7xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
-        >
+        <div className="text-center mb-20 services-header">
           <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-[#f97316] mb-4 uppercase">Our Expertise</span>
           <h2 className="text-4xl md:text-5xl font-serif text-stone-900">Comprehensive Solutions</h2>
-        </motion.div>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 services-cards-grid">
           {services.map((service, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.7, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="relative bg-[#F9F8F6] p-10 rounded-2xl border border-stone-200/50 group hover:bg-stone-950 hover:text-white transition-all duration-700 overflow-hidden shadow-sm hover:shadow-2xl"
+              className="services-card relative bg-[#F9F8F6] p-10 rounded-2xl border border-stone-200/50 group hover:bg-stone-950 hover:text-white transition-all duration-700 overflow-hidden shadow-sm hover:shadow-2xl"
             >
               {/* Hover glow */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_70%)]" />
@@ -732,7 +849,7 @@ const Services = () => {
 
               {/* Bottom border accent */}
               <div className="absolute bottom-0 left-0 w-0 group-hover:w-full h-0.5 bg-[#f97316] transition-all duration-700" />
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
