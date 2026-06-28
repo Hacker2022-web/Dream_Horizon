@@ -1192,320 +1192,282 @@ const Process = () => {
 
 // --- Why Choose Us ---
 // --- Client Portal Showcase ---
-const ClientPortalShowcase = () => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'budget' | 'camera'>('timeline');
+// --- Bespoke Project Planner ---
+const BespokeProjectPlanner = () => {
+  const [activeScope, setActiveScope] = useState<'planning' | 'interiors' | 'turnkey'>('interiors');
+  const [activeSector, setActiveSector] = useState<'residential' | 'office' | 'hospitality'>('residential');
+  const [size, setSize] = useState<number>(2000);
+  const [finishLevel, setFinishLevel] = useState<'refined' | 'minimalist' | 'luxury'>('minimalist');
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    // Left column iPad mockup reveal
-    gsap.from(".portal-left-col", {
+    // Header reveal
+    gsap.from(".planner-header", {
       immediateRender: false,
       scrollTrigger: {
-        trigger: ".portal-left-col",
+        trigger: ".planner-header",
         start: "top 85%",
         toggleActions: "play none none none"
       },
       opacity: 0,
-      x: -40,
+      y: 30,
       duration: 1.0,
       ease: "power3.out"
     });
 
-    // Right column content reveal
-    gsap.from(".portal-right-col", {
+    // Main layout reveal
+    gsap.from(".planner-main", {
       immediateRender: false,
       scrollTrigger: {
-        trigger: ".portal-right-col",
+        trigger: ".planner-main",
         start: "top 85%",
         toggleActions: "play none none none"
       },
       opacity: 0,
-      x: 40,
+      y: 40,
       duration: 1.0,
-      delay: 0.15,
       ease: "power3.out"
     });
   }, { scope: containerRef });
 
-  const tabs = [
-    {
-      id: 'timeline' as const,
-      label: 'Timeline Tracking',
-      title: 'Real-time Project Timeline',
-      description: 'Follow every milestone of your build. From spatial design approvals to structural framing and final finishes, our live tracker ensures you are never left guessing.',
-      icon: Clock
-    },
-    {
-      id: 'documents' as const,
-      label: 'Document Hub',
-      title: 'Bespoke Blueprint & Asset Vault',
-      description: 'Instantly view, download, or review your blueprints, 3D renderings, and materials specification sheets. Everything is organized in one central, secure repository.',
-      icon: FileText
-    },
-    {
-      id: 'budget' as const,
-      label: 'Budget Health',
-      title: 'Financial Progress Transparency',
-      description: 'Maintain absolute clarity over your investment. Track spent resources, upcoming disbursements, and category breakdowns with real-time invoices updated directly by the project manager.',
-      icon: BarChart3
-    },
-    {
-      id: 'camera' as const,
-      label: 'Live Site Feed',
-      title: 'Live Construction Camera',
-      description: 'Observe your project rising from the ground in real-time. Access high-definition, live on-site feeds from anywhere in the world on your smartphone or desktop.',
-      icon: Camera
-    }
+  // Calculate pricing range
+  const calculateCost = () => {
+    let baseRate = 250;
+    if (activeScope === 'planning') baseRate = 120;
+    if (activeScope === 'turnkey') baseRate = 1250;
+
+    let sectorMult = 1.0;
+    if (activeSector === 'residential') sectorMult = 1.2;
+    if (activeSector === 'hospitality') sectorMult = 1.4;
+
+    let finishMult = 1.0;
+    if (finishLevel === 'minimalist') finishMult = 1.3;
+    if (finishLevel === 'luxury') finishMult = 1.85;
+
+    const totalCost = size * baseRate * sectorMult * finishMult;
+    
+    // Create range (-8% to +8%)
+    const low = Math.round(totalCost * 0.92);
+    const high = Math.round(totalCost * 1.08);
+
+    return { low, high };
+  };
+
+  // Format currency in Lakhs or Crores
+  const formatCostRange = (low: number, high: number) => {
+    const formatValue = (val: number) => {
+      if (val >= 10000000) {
+        return `₹${(val / 10000000).toFixed(2)} Cr`;
+      } else {
+        return `₹${(val / 100000).toFixed(1)} L`;
+      }
+    };
+    return `${formatValue(low)} - ${formatValue(high)}`;
+  };
+
+  const calculateDuration = () => {
+    const baseMonths = Math.max(3, Math.round(3 + (size / 1000) * 1.5));
+    const rangeLow = Math.max(2, baseMonths - 1);
+    const rangeHigh = baseMonths + 1;
+    return `${rangeLow} - ${rangeHigh} Months`;
+  };
+
+  const cost = calculateCost();
+  const costString = formatCostRange(cost.low, cost.high);
+  const durationString = calculateDuration();
+
+  // WhatsApp Pre-fill Inquiry
+  const handleInquiry = () => {
+    const scopeLabel = activeScope === 'planning' ? 'Architectural Planning' : activeScope === 'interiors' ? 'Luxury Interior Design' : 'Turnkey Execution';
+    const sectorLabel = activeSector === 'residential' ? 'Private Residential' : activeSector === 'office' ? 'Corporate Office' : 'Bespoke Hospitality';
+    const finishLabel = finishLevel === 'refined' ? 'Refined Classic' : finishLevel === 'minimalist' ? 'Modern Minimalist' : 'Ultra-Luxury Bespoke';
+    const message = `Hello Dream Horizon, I configured an initial project estimation on the website: \n\n- Scope: ${scopeLabel}\n- Sector: ${sectorLabel}\n- Size: ${size} Sq Ft\n- Finish Level: ${finishLabel}\n- Estimate: ${costString}\n- Estimated Duration: ${durationString}\n\nI would love to schedule a detailed design consultation.`;
+    
+    window.open(`https://wa.me/917020705148?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const scopes = [
+    { id: 'planning' as const, label: 'Planning', desc: 'Layout concepts, structure drafts, permissions.' },
+    { id: 'interiors' as const, label: 'Interiors', desc: 'Space planning, carpentry details, styling.' },
+    { id: 'turnkey' as const, label: 'Turnkey', desc: 'End-to-end management, sourcing, contracting.' }
+  ];
+
+  const sectors = [
+    { id: 'residential' as const, label: 'Residential', desc: 'Villas, luxury estates, penthouses.' },
+    { id: 'office' as const, label: 'Corporate Office', desc: 'Collaborative hubs, retail spaces.' },
+    { id: 'hospitality' as const, label: 'Hospitality', desc: 'Lounges, wellness spaces, resorts.' }
+  ];
+
+  const finishes = [
+    { id: 'refined' as const, label: 'Refined Classic', desc: 'Warm wood veneers, custom lighting, premium tiles.' },
+    { id: 'minimalist' as const, label: 'Modern Minimalist', desc: 'Frameless glazing, micro-concrete, brass inserts.' },
+    { id: 'luxury' as const, label: 'Ultra-Luxury Bespoke', desc: 'Imported bookmatched marble, walnut joinery, smart automation.' }
   ];
 
   return (
-    <section id="experience" ref={containerRef} className="py-28 bg-stone-900 text-white relative overflow-hidden noise-overlay">
+    <section id="planner" ref={containerRef} className="py-28 bg-stone-900 text-white relative overflow-hidden noise-overlay">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(var(--accent-rgb),0.03),transparent_50%)]" />
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 items-center">
-          
-          {/* Left Column: Interactive iPad Mockup */}
-          <div className="lg:col-span-7 w-full portal-left-col">
-            {/* iPad outer shell */}
-            <div className="bg-stone-955 border-[10px] border-stone-800 rounded-[2.5rem] shadow-2xl shadow-black/85 overflow-hidden relative aspect-[4/3] w-full max-w-2xl mx-auto flex flex-col">
-              {/* Device camera dot */}
-              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-stone-850 rounded-full z-20" />
+        
+        {/* Header block */}
+        <div className="text-center max-w-2xl mx-auto mb-20 planner-header">
+          <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-stone-500 mb-4 uppercase">Design Estimator</span>
+          <h2 className="text-4xl md:text-5xl font-serif leading-[1.08] text-white mb-6">Bespoke Project Planner</h2>
+          <p className="text-stone-400 text-sm leading-relaxed">
+            Configure your design requirements and build scope to obtain a real-time preliminary timeline and investment range estimate.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-stretch planner-main">
+          {/* Left Configurator Column */}
+          <div className="lg:col-span-7 bg-stone-950/40 border border-stone-800/80 rounded-3xl p-8 space-y-8 flex flex-col justify-between">
+            {/* Scope selectors */}
+            <div className="space-y-4">
+              <label className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-500 block">Project Scope</label>
+              <div className="grid grid-cols-3 gap-3">
+                {scopes.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveScope(s.id)}
+                    className={`p-4 rounded-xl border text-center transition-all duration-300 ${activeScope === s.id ? 'bg-accent border-accent text-black shadow-lg shadow-accent/10 font-medium' : 'bg-stone-900/40 border-stone-900/50 text-stone-300 hover:bg-stone-900/80 hover:border-stone-800'}`}
+                  >
+                    <span className="text-xs uppercase tracking-wider block font-bold">{s.label}</span>
+                    <span className={`text-[0.55rem] mt-1 leading-snug hidden md:block ${activeScope === s.id ? 'text-black/80' : 'text-stone-500'}`}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sector selectors */}
+            <div className="space-y-4">
+              <label className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-500 block">Property Type</label>
+              <div className="grid grid-cols-3 gap-3">
+                {sectors.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveSector(s.id)}
+                    className={`p-4 rounded-xl border text-center transition-all duration-300 ${activeSector === s.id ? 'bg-accent border-accent text-black shadow-lg shadow-accent/10 font-medium' : 'bg-stone-900/40 border-stone-900/50 text-stone-300 hover:bg-stone-900/80 hover:border-stone-800'}`}
+                  >
+                    <span className="text-xs uppercase tracking-wider block font-bold">{s.label}</span>
+                    <span className={`text-[0.55rem] mt-1 leading-snug hidden md:block ${activeSector === s.id ? 'text-black/80' : 'text-stone-500'}`}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Size Slider */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-500 block font-bold">Built-up Area</label>
+                <span className="text-sm text-accent font-mono font-bold">{size.toLocaleString()} Sq Ft</span>
+              </div>
+              <div className="relative pt-2">
+                <input
+                  type="range"
+                  min="500"
+                  max="10000"
+                  step="250"
+                  value={size}
+                  onChange={(e) => setSize(parseInt(e.target.value))}
+                  className="w-full h-1 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-accent"
+                  aria-label="Built up area in square feet"
+                />
+                <div className="flex justify-between text-[0.65rem] text-stone-500 mt-2 font-mono">
+                  <span>500 SF</span>
+                  <span>5,000 SF</span>
+                  <span>10,000+ SF</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Finish Level */}
+            <div className="space-y-4">
+              <label className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-500 block">Material finish grade</label>
+              <div className="grid md:grid-cols-3 gap-3">
+                {finishes.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFinishLevel(f.id)}
+                    className={`p-4 rounded-xl border text-left transition-all duration-300 flex flex-col justify-between h-full ${finishLevel === f.id ? 'bg-accent border-accent text-black shadow-lg shadow-accent/10' : 'bg-stone-900/40 border-stone-900/50 text-stone-300 hover:bg-stone-900/80 hover:border-stone-800'}`}
+                  >
+                    <span className="text-xs uppercase tracking-wider block font-bold">{f.label}</span>
+                    <span className={`text-[0.55rem] mt-1.5 leading-relaxed ${finishLevel === f.id ? 'text-black/80' : 'text-stone-500'}`}>{f.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Estimate Output Column */}
+          <div className="lg:col-span-5 flex flex-col">
+            <div className="flex-1 bg-stone-950 border border-stone-800 rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
               
-              {/* Portal Header */}
-              <div className="bg-stone-900/90 border-b border-stone-800/80 px-6 py-4 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-accent/10 flex items-center justify-center border border-accent/20">
-                    <span className="font-serif text-accent font-bold text-xs font-mono">DH</span>
+              <div className="space-y-8">
+                <div>
+                  <span className="text-[0.55rem] font-bold tracking-[0.25em] text-accent uppercase font-mono">Estimated Range</span>
+                  <div className="text-3xl md:text-4xl font-serif font-bold text-white mt-3 font-mono leading-none">
+                    {costString}
+                  </div>
+                  <p className="text-[0.65rem] text-stone-500 mt-2 font-light">
+                    *Approximate cost based on configured area size, premium standards, and execution grade.
+                  </p>
+                </div>
+
+                <div className="hairline" />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[0.55rem] font-bold tracking-[0.2em] text-stone-500 uppercase block">Timeline Range</span>
+                    <span className="text-base font-serif font-bold text-stone-200 mt-1 block font-mono">{durationString}</span>
                   </div>
                   <div>
-                    <h4 className="text-[0.7rem] font-bold tracking-wider text-stone-200 uppercase">Dream Horizon Portal</h4>
-                    <p className="text-[0.6rem] text-stone-500 font-mono">Project: Oakridge Estates</p>
+                    <span className="text-[0.55rem] font-bold tracking-[0.2em] text-stone-500 uppercase block">Milestones</span>
+                    <span className="text-base font-serif font-bold text-stone-200 mt-1 block font-mono">
+                      {activeScope === 'planning' ? '3 Stages' : activeScope === 'interiors' ? '5 Stages' : '8 Stages'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-[0.6rem] font-bold tracking-wider text-stone-400 uppercase font-mono">Active Phase: Framing</span>
+
+                <div className="hairline" />
+
+                <div className="space-y-3">
+                  <span className="text-[0.55rem] font-bold tracking-[0.2em] text-stone-500 uppercase block">Key inclusions</span>
+                  <ul className="space-y-2 text-xs text-stone-400">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-accent rounded-full shrink-0" />
+                      Vision consultations & space planning
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-accent rounded-full shrink-0" />
+                      Detailed 3D layout renderings
+                    </li>
+                    {activeScope !== 'planning' && (
+                      <li className="flex items-center gap-2">
+                        <span className="w-1 h-1 bg-accent rounded-full shrink-0" />
+                        Finest bespoke material sourcing
+                      </li>
+                    )}
+                    {activeScope === 'turnkey' && (
+                      <li className="flex items-center gap-2">
+                        <span className="w-1 h-1 bg-accent rounded-full shrink-0" />
+                        Timely contractor & vendor supervision
+                      </li>
+                    )}
+                  </ul>
                 </div>
               </div>
 
-              {/* Portal Content Area */}
-              <div className="flex-1 bg-stone-955 p-6 overflow-y-auto min-h-0 relative">
-                <AnimatePresence mode="wait">
-                  {activeTab === 'timeline' && (
-                    <motion.div
-                      key="timeline"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-5"
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-bold text-stone-300 uppercase tracking-wider">Overall Completion</span>
-                        <span className="text-xs font-bold text-accent font-mono">72% Completed</span>
-                      </div>
-                      <div className="h-1.5 bg-stone-850 rounded-full overflow-hidden w-full">
-                        <div className="h-full bg-gradient-to-r from-accent to-[#ca8a04] rounded-full w-[72%]" />
-                      </div>
-
-                      <div className="space-y-3 mt-6">
-                        {[
-                          { phase: "01. Space Design & Layout", status: "Completed", date: "Jan 12, 2026", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-                          { phase: "02. 3D Renders & Materials", status: "Completed", date: "Feb 28, 2026", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-                          { phase: "03. Municipal Permits & Site prep", status: "Completed", date: "Mar 15, 2026", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-                          { phase: "04. Foundation & Concrete works", status: "Completed", date: "May 02, 2026", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-                          { phase: "05. Structural Steel & Wood Framing", status: "In Progress (85%)", date: "Est. Jul 15, 2026", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", active: true },
-                          { phase: "06. Interior Finishing & Styling", status: "Pending", date: "Est. Sep 10, 2026", color: "bg-stone-900 text-stone-600 border-stone-900" }
-                        ].map((item, idx) => (
-                          <div key={idx} className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${item.active ? 'bg-stone-900 border-stone-800' : 'bg-stone-900/40 border-stone-900/50'}`}>
-                            <div className="flex items-center gap-3">
-                              <span className={`w-2 h-2 rounded-full ${item.active ? 'bg-accent animate-pulse' : idx < 4 ? 'bg-green-500' : 'bg-stone-700'}`} />
-                              <div>
-                                <h5 className={`text-xs font-semibold ${item.active ? 'text-white' : 'text-stone-300'}`}>{item.phase}</h5>
-                                <p className="text-[0.6rem] text-stone-500 mt-0.5">{item.date}</p>
-                              </div>
-                            </div>
-                            <span className={`text-[0.55rem] font-bold px-2 py-0.5 rounded-full border ${item.color}`}>{item.status}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'documents' && (
-                    <motion.div
-                      key="documents"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-4"
-                    >
-                      <h4 className="text-xs font-bold text-stone-300 uppercase tracking-wider mb-2">Vault Files</h4>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        {[
-                          { name: "Ground Floor Plan.pdf", type: "Blueprints", size: "12.4 MB" },
-                          { name: "Kitchen 3D Render.jpg", type: "Renderings", size: "8.1 MB" },
-                          { name: "Living Room Concept.jpg", type: "Renderings", size: "9.3 MB" },
-                          { name: "Lighting Layout Plan.pdf", type: "Blueprints", size: "4.8 MB" },
-                          { name: "Italian Marble Spec.xlsx", type: "Material Sheet", size: "1.2 MB" },
-                          { name: "HVAC System Layout.pdf", type: "Blueprints", size: "5.5 MB" }
-                        ].map((doc, idx) => (
-                          <div key={idx} className="bg-stone-900/60 border border-stone-900/80 hover:border-stone-800 transition-all rounded-xl p-3 flex flex-col justify-between cursor-pointer group">
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 bg-stone-850 rounded-lg group-hover:bg-accent/10 group-hover:text-accent transition-colors text-stone-400">
-                                <FileText size={14} />
-                              </div>
-                              <div className="min-w-0">
-                                <h5 className="text-xs font-semibold text-stone-200 truncate group-hover:text-white transition-colors">{doc.name}</h5>
-                                <p className="text-[0.55rem] text-stone-500 mt-0.5 tracking-wide uppercase font-mono">{doc.type}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-stone-900/80 mt-3 pt-2">
-                              <span className="text-[0.65rem] text-stone-500 font-mono">{doc.size}</span>
-                              <span className="text-[0.65rem] text-stone-400 group-hover:text-accent font-medium transition-colors">Download</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'budget' && (
-                    <motion.div
-                      key="budget"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-5"
-                    >
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-stone-900 p-2.5 rounded-xl border border-stone-850 text-center">
-                          <h6 className="text-[0.55rem] text-stone-500 uppercase tracking-wider font-bold">Total Budget</h6>
-                          <p className="text-xs font-serif font-bold text-white mt-1 font-mono">₹4.50 Cr</p>
-                        </div>
-                        <div className="bg-stone-900 p-2.5 rounded-xl border border-stone-850 text-center">
-                          <h6 className="text-[0.55rem] text-stone-500 uppercase tracking-wider font-bold">Disbursed</h6>
-                          <p className="text-xs font-serif font-bold text-green-400 mt-1 font-mono">₹2.88 Cr</p>
-                        </div>
-                        <div className="bg-stone-900 p-2.5 rounded-xl border border-stone-850 text-center">
-                          <h6 className="text-[0.55rem] text-stone-500 uppercase tracking-wider font-bold">Invoiced</h6>
-                          <p className="text-xs font-serif font-bold text-amber-400 mt-1 font-mono">₹32.4 L</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-stone-900/60 border border-stone-900/80 rounded-xl p-3.5 space-y-3.5">
-                        <h4 className="text-[0.7rem] font-bold text-stone-300 uppercase tracking-wider">Disbursement Breakdown</h4>
-                        {[
-                          { category: "Structure & Civil Works", allocated: "₹1.80 Cr", spent: "₹1.65 Cr", percent: 91 },
-                          { category: "Flooring & Masonry", allocated: "₹65.0 L", spent: "₹45.5 L", percent: 70 },
-                          { category: "HVAC & Electricals", allocated: "₹50.0 L", spent: "₹32.0 L", percent: 64 },
-                          { category: "Fine Carpentry & Glass", allocated: "₹95.0 L", spent: "₹45.0 L", percent: 47 },
-                          { category: "Lighting & Home Automation", allocated: "₹60.0 L", spent: "₹1.5 L", percent: 2 }
-                        ].map((cat, idx) => (
-                          <div key={idx} className="space-y-1">
-                            <div className="flex justify-between items-center text-[0.65rem]">
-                              <span className="font-semibold text-stone-300">{cat.category}</span>
-                              <span className="text-stone-500 font-mono">{cat.spent} / {cat.allocated}</span>
-                            </div>
-                            <div className="h-1 bg-stone-850 rounded-full overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-accent to-[#ca8a04] rounded-full" style={{ width: `${cat.percent}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'camera' && (
-                    <motion.div
-                      key="camera"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="relative h-full flex flex-col justify-between"
-                    >
-                      <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-stone-800 bg-stone-955">
-                        {/* Simulated video frame */}
-                        <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")` }} />
-                        
-                        {/* Grid lines overlay */}
-                        <div className="absolute inset-0 border border-white/5 grid grid-cols-3 grid-rows-3 pointer-events-none" />
-                        
-                        {/* Stream status overlays */}
-                        <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded text-[0.55rem] font-bold text-white uppercase tracking-widest flex items-center gap-1 font-mono">
-                          <span className="w-1 h-1 bg-red-500 rounded-full animate-ping" />
-                          REC [CAM-03]
-                        </div>
-                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded text-[0.55rem] font-bold text-stone-300 uppercase tracking-widest font-mono">
-                          1080P // 30 FPS
-                        </div>
-                        <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded text-[0.55rem] font-mono text-stone-300">
-                          CAM-03 // LIVE FEED
-                        </div>
-                      </div>
-                      
-                      <div className="bg-stone-900/60 p-3 rounded-xl border border-stone-900/80 mt-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 bg-stone-850 rounded-lg text-accent">
-                            <Camera size={14} />
-                          </div>
-                          <div>
-                            <h5 className="text-xs font-semibold text-white">Deck Construction Cam</h5>
-                            <p className="text-[0.55rem] text-stone-500">Source: Hikvision Pro 4K</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1.5">
-                          <button className="px-2 py-0.5 bg-stone-850 hover:bg-stone-800 transition text-[0.55rem] font-bold uppercase tracking-wider rounded text-stone-400">Cam 01</button>
-                          <button className="px-2 py-0.5 bg-accent text-black text-[0.55rem] font-bold uppercase tracking-wider rounded">Cam 03</button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <button
+                onClick={handleInquiry}
+                className="btn-accent w-full py-4 rounded-xl text-xs font-bold tracking-[0.15em] uppercase hover:shadow-xl hover:shadow-accent/15 hover:-translate-y-0.5 transition-all duration-300 mt-8 flex items-center justify-center gap-2"
+              >
+                Inquire on WhatsApp <ArrowRight size={14} />
+              </button>
             </div>
           </div>
-
-          {/* Right Column: Explanatory Texts & Interactive Controls */}
-          <div className="lg:col-span-5 space-y-10 portal-right-col">
-            <div>
-              <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-stone-400 mb-4 uppercase">The Client Experience</span>
-              <h2 className="text-4xl md:text-5xl font-serif leading-[1.08] text-white mb-6">Complete Build Transparency</h2>
-              <p className="text-stone-400 text-sm leading-relaxed">
-                We believe that premium craftsmanship requires absolute project alignment. Our bespoke client portal eliminates anxiety, providing real-time updates and full administrative control directly to your device.
-              </p>
-            </div>
-
-            {/* Interactive Tab Selectors */}
-            <div className="space-y-3">
-              {tabs.map((tab) => {
-                const TabIcon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex gap-4 ${isActive ? 'bg-accent border-accent text-black shadow-lg shadow-accent/10' : 'bg-stone-900/40 border-stone-900/50 text-stone-300 hover:bg-stone-900/80 hover:border-stone-800'}`}
-                  >
-                    <div className={`p-2 rounded-lg transition-colors shrink-0 flex items-center justify-center ${isActive ? 'bg-black/10 text-black' : 'bg-stone-800 text-accent'}`}>
-                      <TabIcon size={18} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs tracking-wide uppercase">{tab.label}</h4>
-                      <p className={`text-[0.7rem] mt-0.5 leading-relaxed ${isActive ? 'text-black/80' : 'text-stone-500'}`}>
-                        {isActive ? tab.description : `Preview real-time ${tab.label.toLowerCase()} interface.`}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
         </div>
+
       </div>
     </section>
   );
@@ -2326,7 +2288,7 @@ const LayoutContainer = ({ scaleX }: { scaleX: any }) => {
               <ParallaxQuote />
               <Portfolio />
               <Process />
-              <ClientPortalShowcase />
+              <BespokeProjectPlanner />
               <Testimonials />
               <CTABanner />
               <Contact />
