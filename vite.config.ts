@@ -5,8 +5,11 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  const isNetlify = process.env.NETLIFY === 'true';
+  const base = isNetlify ? '/' : '/dream_horizan/';
+
   return {
-    base: '/dream_horizan/',
+    base,
     plugins: [
       react(),
       tailwindcss(),
@@ -14,8 +17,8 @@ export default defineConfig(({mode}) => {
         name: 'redirect-to-base',
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
-            if (req.url === '/' || req.url === '/index.html') {
-              res.writeHead(302, { Location: '/dream_horizan/' });
+            if (base !== '/' && (req.url === '/' || req.url === '/index.html')) {
+              res.writeHead(302, { Location: base });
               res.end();
             } else {
               next();
