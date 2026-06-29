@@ -689,6 +689,11 @@ const About = () => {
 
           <div className="about-text-block">
             <div className="about-text-item">
+              <div className="inline-flex items-center gap-2 mb-6 bg-accent/10 border border-accent/25 px-4 py-1.5 rounded-full shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="text-[0.55rem] font-bold tracking-[0.2em] uppercase text-stone-800 font-mono">DPIIT-Recognised by Govt. of India</span>
+              </div>
+              <br />
               <span className="inline-block text-[0.65rem] font-bold tracking-[0.3em] text-accent mb-5 uppercase">{about.eyebrow}</span>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-8 text-stone-900 leading-[1.08]">
                 {about.heading1} <br />
