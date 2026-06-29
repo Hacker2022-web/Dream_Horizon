@@ -433,7 +433,7 @@ const Hero = () => {
     
     // Initial states
     gsap.set(".hero-orange-line", { scaleX: 0, opacity: 0 });
-    gsap.set([".hero-sub", ".hero-title", ".hero-desc", ".hero-btn", ".hero-badge", ".hero-scroll"], {
+    gsap.set([".hero-sub", ".hero-title", ".hero-desc", ".hero-btn", ".hero-scroll"], {
       opacity: 0,
       y: 35
     });
@@ -482,13 +482,6 @@ const Hero = () => {
       stagger: 0.15,
       ease: "power3.out"
     }, "-=0.4")
-    .to(".hero-badge", {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      stagger: 0.1,
-      ease: "power3.out"
-    }, "-=0.3")
     .to(".hero-scroll", {
       opacity: 1,
       y: 0,
@@ -570,14 +563,7 @@ const Hero = () => {
         </div>
       </motion.div>
 
-      {/* Bottom feature badges */}
-      <div className="absolute bottom-20 left-0 right-0 z-10 hidden lg:flex justify-center items-center gap-14 text-stone-500 text-[0.6rem] tracking-[0.3em] uppercase font-bold">
-        {hero.badges.map((badge, i) => (
-          <span key={i} className="flex items-center gap-3 hero-badge">
-            <span className="w-1 h-1 rounded-full bg-accent" /> {badge}
-          </span>
-        ))}
-      </div>
+
 
       {/* Scroll indicator */}
       <div
