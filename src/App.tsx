@@ -1935,35 +1935,37 @@ Looking forward to hearing from you!`;
                     />
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Project Type</label>
-                      <select
-                        name="projectType"
-                        value={formData.projectType}
-                        onChange={handleChange}
-                        className="w-full border-b border-stone-200 py-2.5 focus:outline-none focus:border-accent transition-colors bg-transparent text-sm"
-                      >
-                        <option>Full Renovation</option>
-                        <option>Interior Styling</option>
-                        <option>Architectural Planning</option>
-                        <option>Turnkey Execution</option>
-                      </select>
+                  {/* Custom Project Type Chips */}
+                  <div className="space-y-3">
+                    <label className="block text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Project Type</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Full Renovation', 'Interior Styling', 'Architectural Planning', 'Turnkey Execution'].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, projectType: type }))}
+                          className={`px-4 py-2 rounded-full border text-[0.65rem] font-bold uppercase tracking-wider transition-all duration-300 ${formData.projectType === type ? 'bg-accent border-accent text-black shadow-md shadow-accent/15' : 'bg-transparent border-stone-200 text-stone-600 hover:border-stone-400'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Budget Range</label>
-                      <select
-                        name="budget"
-                        value={formData.budget}
-                        onChange={handleChange}
-                        className="w-full border-b border-stone-200 py-2.5 focus:outline-none focus:border-accent transition-colors bg-transparent text-sm"
-                      >
-                        <option>Under ₹5 Lakhs</option>
-                        <option>₹5 Lakhs - ₹15 Lakhs</option>
-                        <option>₹15 Lakhs - ₹30 Lakhs</option>
-                        <option>₹30 Lakhs - ₹75 Lakhs</option>
-                        <option>₹75 Lakhs+</option>
-                      </select>
+                  </div>
+
+                  {/* Custom Budget Chips */}
+                  <div className="space-y-3">
+                    <label className="block text-[0.65rem] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Budget Range</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Under ₹5 Lakhs', '₹5 Lakhs - ₹15 Lakhs', '₹15 Lakhs - ₹30 Lakhs', '₹30 Lakhs - ₹75 Lakhs', '₹75 Lakhs+'].map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, budget: b }))}
+                          className={`px-4 py-2 rounded-full border text-[0.65rem] font-bold uppercase tracking-wider transition-all duration-300 ${formData.budget === b ? 'bg-accent border-accent text-black shadow-md shadow-accent/15' : 'bg-transparent border-stone-200 text-stone-600 hover:border-stone-400'}`}
+                        >
+                          {b}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
