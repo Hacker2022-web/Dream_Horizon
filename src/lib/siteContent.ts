@@ -257,7 +257,7 @@ export const defaultContent: SiteContent = {
     heading: "Let's Discuss Your Project",
     description:
       "Ready to elevate your space? Fill out the form, and we'll reach out via WhatsApp within 24 hours to discuss your project.",
-    office: 'Level 4, Trade Centre\nBandra Kurla Complex, Mumbai 400051',
+    office: 'Office No.7, Jijamata Vyapari Sankul/Prekshagar,\nBuldana 443001',
     email: 'info@dreamhorizon.com',
     phone: '+91 70207 05148',
     hours: 'Mon - Fri: 9am - 6pm\nSat: By Appointment',
@@ -302,24 +302,22 @@ export const getSiteContent = (): SiteContent => {
 type ContentCallback = (content: SiteContent) => void;
 const listeners = new Set<ContentCallback>();
 
-// Live Firestore sync for site content
+// Local-first Firestore sync for site content.
 export const subscribeSiteContent = (callback: ContentCallback) => {
   listeners.add(callback);
   callback(getSiteContent());
 
   const docRef = doc(db, 'site_config', 'main');
   const unsubscribe = onSnapshot(docRef, (docSnap) => {
-    if (!docSnap.exists()) {
-      // Seed Firestore with defaults if not present
-      seedSiteContent();
-    } else {
+    // Only override local data when Firestore actually has the document
+    if (docSnap.exists()) {
       const content = mergeWithDefaults(docSnap.data() as SiteContent);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
       callback(content);
     }
-  }, (error) => {
-    console.warn("Firestore site content query failed, falling back to local:", error);
-    callback(getSiteContent());
+    // If doc doesn't exist, keep using localStorage (don't seed/overwrite)
+  }, (_error) => {
+    // Firestore unavailable — localStorage already shown
   });
 
   return () => {
@@ -328,37 +326,31 @@ export const subscribeSiteContent = (callback: ContentCallback) => {
   };
 };
 
-const seedSiteContent = async () => {
-  try {
-    await setDoc(doc(db, 'site_config', 'main'), defaultContent);
-  } catch (err) {
-    console.error("Failed to seed site content to Firestore:", err);
-  }
-};
-
 const notify = () => {
   const content = getSiteContent();
   listeners.forEach((cb) => cb(content));
 };
 
 export const updateSiteContent = async (content: SiteContent) => {
+  // Always save locally first so changes persist immediately
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+  notify();
+
+  // Then mirror to Firestore in the background
   try {
     await setDoc(doc(db, 'site_config', 'main'), content);
-  } catch (err) {
-    console.warn("Firestore site content write failed, saving locally:", err);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-    notify();
-  }
+  } catch (_) {}
 };
 
 export const resetSiteContent = async () => {
+  // Always reset locally first
+  localStorage.removeItem(STORAGE_KEY);
+  notify();
+
+  // Then mirror to Firestore
   try {
     await deleteDoc(doc(db, 'site_config', 'main'));
-  } catch (err) {
-    console.warn("Firestore site content delete failed, resetting locally:", err);
-    localStorage.removeItem(STORAGE_KEY);
-    notify();
-  }
+  } catch (_) {}
 };
 
 // Convenience hook used by landing-page sections.

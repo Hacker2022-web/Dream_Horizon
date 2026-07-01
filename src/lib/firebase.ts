@@ -130,51 +130,32 @@ const saveLocalProjects = (projects: Project[]) => {
 type ProjectCallback = (projects: Project[]) => void;
 const projectListeners = new Set<ProjectCallback>();
 
-// Live Firestore sync for projects
+// Local-first Firestore sync for projects.
+// localStorage is the source of truth; Firestore is a cloud mirror.
 export const subscribeProjects = (callback: ProjectCallback) => {
   projectListeners.add(callback);
   callback(getLocalProjects());
 
   const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    if (snapshot.empty) {
-      // Seed Firestore with default projects if empty
-      seedProjects();
-    } else {
+    // Only override local data when Firestore actually has content
+    if (!snapshot.empty) {
       const items: Project[] = [];
-      snapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() } as Project);
+      snapshot.forEach((d) => {
+        items.push({ id: d.id, ...d.data() } as Project);
       });
       saveLocalProjects(items);
       callback(items);
     }
-  }, (error) => {
-    console.warn("Firestore projects query failed, falling back to local:", error);
-    callback(getLocalProjects());
+    // If Firestore is empty, keep using localStorage (don't seed/overwrite)
+  }, (_error) => {
+    // Firestore unavailable — localStorage already shown, nothing to do
   });
 
   return () => {
     unsubscribe();
     projectListeners.delete(callback);
   };
-};
-
-const seedProjects = async () => {
-  try {
-    for (const p of defaultProjects) {
-      await setDoc(doc(db, 'projects', p.id), {
-        title: p.title,
-        description: p.description,
-        category: p.category,
-        client: p.client || '',
-        year: p.year || '',
-        imageUrl: p.imageUrl,
-        createdAt: p.createdAt
-      });
-    }
-  } catch (err) {
-    console.error("Failed to seed projects to Firestore:", err);
-  }
 };
 
 const notifyProjectListeners = () => {
@@ -250,15 +231,14 @@ export const createProject = async (
     createdAt: Date.now()
   };
 
-  try {
-    await setDoc(doc(db, 'projects', id), newProject);
-  } catch (err) {
-    console.warn("Firestore projects write failed, fallback to local:", err);
-    const projects = getLocalProjects();
-    projects.unshift(newProject);
-    saveLocalProjects(projects);
-    notifyProjectListeners();
-  }
+  // Always save locally first so changes persist immediately
+  const projects = getLocalProjects();
+  projects.unshift(newProject);
+  saveLocalProjects(projects);
+  notifyProjectListeners();
+
+  // Then mirror to Firestore in the background
+  try { await setDoc(doc(db, 'projects', id), newProject); } catch (_) {}
 };
 
 export const updateProject = async (
@@ -271,37 +251,36 @@ export const updateProject = async (
     imageUrl = await fileToDataUrl(newFile);
   }
 
+  // Always save locally first
+  const projects = getLocalProjects();
+  const idx = projects.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    projects[idx] = {
+      ...projects[idx],
+      ...updates,
+      imageUrl: imageUrl || projects[idx].imageUrl
+    };
+    saveLocalProjects(projects);
+    notifyProjectListeners();
+  }
+
+  // Then mirror to Firestore
   try {
-    const docRef = doc(db, 'projects', id);
     const data: any = { ...updates };
     if (imageUrl) data.imageUrl = imageUrl;
-    await setDoc(docRef, data, { merge: true });
-  } catch (err) {
-    console.warn("Firestore project update failed, fallback to local:", err);
-    const projects = getLocalProjects();
-    const idx = projects.findIndex(p => p.id === id);
-    if (idx !== -1) {
-      projects[idx] = {
-        ...projects[idx],
-        ...updates,
-        imageUrl: imageUrl || projects[idx].imageUrl
-      };
-      saveLocalProjects(projects);
-      notifyProjectListeners();
-    }
-  }
+    await setDoc(doc(db, 'projects', id), data, { merge: true });
+  } catch (_) {}
 };
 
 export const deleteProject = async (id: string) => {
-  try {
-    await deleteDoc(doc(db, 'projects', id));
-  } catch (err) {
-    console.warn("Firestore project delete failed, fallback to local:", err);
-    const projects = getLocalProjects();
-    const filtered = projects.filter(p => p.id !== id);
-    saveLocalProjects(filtered);
-    notifyProjectListeners();
-  }
+  // Always save locally first
+  const projects = getLocalProjects();
+  const filtered = projects.filter(p => p.id !== id);
+  saveLocalProjects(filtered);
+  notifyProjectListeners();
+
+  // Then mirror to Firestore
+  try { await deleteDoc(doc(db, 'projects', id)); } catch (_) {}
 };
 
 // --- Team Management ---
@@ -317,37 +296,17 @@ export interface TeamMember {
 const defaultTeam: TeamMember[] = [
   {
     id: '1',
-    name: 'Aarav Mehta',
-    role: 'Principal Architect & Founder',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-    createdAt: Date.now() - 400000
-  },
-  {
-    id: '2',
-    name: 'Meera Sen',
-    role: 'Director of Interior Design',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-    createdAt: Date.now() - 300000
-  },
-  {
-    id: '3',
-    name: 'Kabir Malhotra',
-    role: 'Lead Structural Engineer',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-    createdAt: Date.now() - 200000
-  },
-  {
-    id: '4',
-    name: 'Ananya Roy',
-    role: 'BIM & Sustainability Lead',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-    createdAt: Date.now() - 100000
+    name: 'Ajnkya Sapkal',
+    role: 'Founder and CEO at Dream Horizon',
+    image: `${base}team_ajnkya.jpg`,
+    createdAt: Date.now()
   }
 ];
 
 export const getLocalTeam = (): TeamMember[] => {
   const stored = localStorage.getItem('dreamhorizon_team');
-  if (!stored) {
+  const hasOldDefaults = stored && stored.includes('Aarav Mehta');
+  if (!stored || hasOldDefaults) {
     localStorage.setItem('dreamhorizon_team', JSON.stringify(defaultTeam));
     return defaultTeam;
   }
@@ -365,47 +324,29 @@ const saveLocalTeam = (team: TeamMember[]) => {
 type TeamCallback = (team: TeamMember[]) => void;
 const teamListeners = new Set<TeamCallback>();
 
-// Live Firestore sync for team
+// Local-first Firestore sync for team.
 export const subscribeTeam = (callback: TeamCallback) => {
   teamListeners.add(callback);
   callback(getLocalTeam());
 
   const q = query(collection(db, 'team'), orderBy('createdAt', 'asc'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    if (snapshot.empty) {
-      seedTeam();
-    } else {
+    if (!snapshot.empty) {
       const items: TeamMember[] = [];
-      snapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() } as TeamMember);
+      snapshot.forEach((d) => {
+        items.push({ id: d.id, ...d.data() } as TeamMember);
       });
       saveLocalTeam(items);
       callback(items);
     }
-  }, (error) => {
-    console.warn("Firestore team query failed, falling back to local:", error);
-    callback(getLocalTeam());
+  }, (_error) => {
+    // Firestore unavailable — localStorage already shown
   });
 
   return () => {
     unsubscribe();
     teamListeners.delete(callback);
   };
-};
-
-const seedTeam = async () => {
-  try {
-    for (const m of defaultTeam) {
-      await setDoc(doc(db, 'team', m.id), {
-        name: m.name,
-        role: m.role,
-        image: m.image,
-        createdAt: m.createdAt
-      });
-    }
-  } catch (err) {
-    console.error("Failed to seed team to Firestore:", err);
-  }
 };
 
 const notifyTeamListeners = () => {
@@ -426,15 +367,14 @@ export const createTeamMember = async (
     createdAt: Date.now()
   };
 
-  try {
-    await setDoc(doc(db, 'team', id), newMember);
-  } catch (err) {
-    console.warn("Firestore team write failed, fallback to local:", err);
-    const team = getLocalTeam();
-    team.push(newMember);
-    saveLocalTeam(team);
-    notifyTeamListeners();
-  }
+  // Always save locally first
+  const team = getLocalTeam();
+  team.push(newMember);
+  saveLocalTeam(team);
+  notifyTeamListeners();
+
+  // Then mirror to Firestore
+  try { await setDoc(doc(db, 'team', id), newMember); } catch (_) {}
 };
 
 export const updateTeamMember = async (
@@ -447,35 +387,34 @@ export const updateTeamMember = async (
     image = await fileToDataUrl(newFile);
   }
 
+  // Always save locally first
+  const team = getLocalTeam();
+  const idx = team.findIndex(m => m.id === id);
+  if (idx !== -1) {
+    team[idx] = {
+      ...team[idx],
+      ...updates,
+      image: image || team[idx].image
+    };
+    saveLocalTeam(team);
+    notifyTeamListeners();
+  }
+
+  // Then mirror to Firestore
   try {
-    const docRef = doc(db, 'team', id);
     const data: any = { ...updates };
     if (image) data.image = image;
-    await setDoc(docRef, data, { merge: true });
-  } catch (err) {
-    console.warn("Firestore team update failed, fallback to local:", err);
-    const team = getLocalTeam();
-    const idx = team.findIndex(m => m.id === id);
-    if (idx !== -1) {
-      team[idx] = {
-        ...team[idx],
-        ...updates,
-        image: image || team[idx].image
-      };
-      saveLocalTeam(team);
-      notifyTeamListeners();
-    }
-  }
+    await setDoc(doc(db, 'team', id), data, { merge: true });
+  } catch (_) {}
 };
 
 export const deleteTeamMember = async (id: string) => {
-  try {
-    await deleteDoc(doc(db, 'team', id));
-  } catch (err) {
-    console.warn("Firestore team delete failed, fallback to local:", err);
-    const team = getLocalTeam();
-    const filtered = team.filter(m => m.id !== id);
-    saveLocalTeam(filtered);
-    notifyTeamListeners();
-  }
+  // Always save locally first
+  const team = getLocalTeam();
+  const filtered = team.filter(m => m.id !== id);
+  saveLocalTeam(filtered);
+  notifyTeamListeners();
+
+  // Then mirror to Firestore
+  try { await deleteDoc(doc(db, 'team', id)); } catch (_) {}
 };
