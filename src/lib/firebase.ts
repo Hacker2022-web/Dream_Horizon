@@ -3,16 +3,17 @@ import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, query, or
 
 // Initialize real Firebase App using credentials from config
 const firebaseConfig = {
-  projectId: "gen-lang-client-0607869921",
-  appId: "1:692182706577:web:d22ff0ec34969802549230",
-  apiKey: "AIzaSyCQIOSSnpoClaKTIIoFBO6Gxzt_E2zFack",
-  authDomain: "gen-lang-client-0607869921.firebaseapp.com",
-  storageBucket: "gen-lang-client-0607869921.firebasestorage.app",
-  messagingSenderId: "692182706577",
+  apiKey: "AIzaSyDe7Ua87oKMOEAZRMknVrQJMidTiBbbI2Q",
+  authDomain: "dream-1e8da.firebaseapp.com",
+  projectId: "dream-1e8da",
+  storageBucket: "dream-1e8da.firebasestorage.app",
+  messagingSenderId: "759740452579",
+  appId: "1:759740452579:web:646658019343429f4abfd6",
+  measurementId: "G-JDQB15G7KD"
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, "ai-studio-0fed7bbc-01b2-4231-8695-683cf29a51cc");
+export const db = getFirestore(app);
 
 export interface User {
   uid: string;
