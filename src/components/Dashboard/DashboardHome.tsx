@@ -111,7 +111,7 @@ export const DashboardHome = () => {
   ];
 
   return (
-    <section className="min-h-screen bg-stone-955 text-stone-100 pt-20 pb-16 px-4 md:px-8">
+    <section className="min-h-screen bg-stone-950 text-stone-100 pt-20 pb-16 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Block */}
         <header className="bg-stone-900/50 backdrop-blur-md border border-stone-800/80 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
