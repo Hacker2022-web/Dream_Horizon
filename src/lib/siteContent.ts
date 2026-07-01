@@ -1,8 +1,6 @@
-// Site-wide editable content store.
-// Mirrors the localStorage + listener pattern used in firebase.ts so the
-// landing page updates in real time whenever the admin saves changes.
-
 import { useEffect, useState } from 'react';
+import { db } from './firebase';
+import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 
 export interface StatItem {
   value: string;
@@ -304,12 +302,38 @@ export const getSiteContent = (): SiteContent => {
 type ContentCallback = (content: SiteContent) => void;
 const listeners = new Set<ContentCallback>();
 
+// Live Firestore sync for site content
 export const subscribeSiteContent = (callback: ContentCallback) => {
   listeners.add(callback);
   callback(getSiteContent());
+
+  const docRef = doc(db, 'site_config', 'main');
+  const unsubscribe = onSnapshot(docRef, (docSnap) => {
+    if (!docSnap.exists()) {
+      // Seed Firestore with defaults if not present
+      seedSiteContent();
+    } else {
+      const content = mergeWithDefaults(docSnap.data() as SiteContent);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+      callback(content);
+    }
+  }, (error) => {
+    console.warn("Firestore site content query failed, falling back to local:", error);
+    callback(getSiteContent());
+  });
+
   return () => {
+    unsubscribe();
     listeners.delete(callback);
   };
+};
+
+const seedSiteContent = async () => {
+  try {
+    await setDoc(doc(db, 'site_config', 'main'), defaultContent);
+  } catch (err) {
+    console.error("Failed to seed site content to Firestore:", err);
+  }
 };
 
 const notify = () => {
@@ -317,14 +341,24 @@ const notify = () => {
   listeners.forEach((cb) => cb(content));
 };
 
-export const updateSiteContent = (content: SiteContent) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-  notify();
+export const updateSiteContent = async (content: SiteContent) => {
+  try {
+    await setDoc(doc(db, 'site_config', 'main'), content);
+  } catch (err) {
+    console.warn("Firestore site content write failed, saving locally:", err);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+    notify();
+  }
 };
 
-export const resetSiteContent = () => {
-  localStorage.removeItem(STORAGE_KEY);
-  notify();
+export const resetSiteContent = async () => {
+  try {
+    await deleteDoc(doc(db, 'site_config', 'main'));
+  } catch (err) {
+    console.warn("Firestore site content delete failed, resetting locally:", err);
+    localStorage.removeItem(STORAGE_KEY);
+    notify();
+  }
 };
 
 // Convenience hook used by landing-page sections.
