@@ -2404,47 +2404,54 @@ const ScrollToTopOnRouteChange = () => {
 
 // --- Layout Container ---
 const LayoutContainer = ({ scaleX }: { scaleX: any }) => {
+  const { pathname } = useLocation();
+  const isDashboardOrLogin = pathname === '/dashboard' || pathname === '/login';
+
   return (
     <>
       <ThemeApplier />
       <ScrollToTopOnRouteChange />
-      <CursorFollower />
-      <a href="#portfolio" className="skip-link bg-stone-900 text-white px-4 py-2 text-sm font-medium">
-        Skip to content
-      </a>
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] bg-accent origin-left z-[100]"
-        style={{ scaleX }}
-        aria-hidden="true"
-      />
-      <Navbar />
-        <Routes>
-          <Route path="/" element={
-            <>
-              <Hero />
-              <Marquee />
-              <About />
-              <ConstructionSequence />
-              <StudioTeam />
-              <TrustedBy />
-              <Sectors />
-              <Services />
-              <ParallaxQuote />
-              <Portfolio />
-              <Process />
-              <BespokeProjectPlanner />
-              <Testimonials />
-              <CTABanner />
-              <Contact />
-            </>
-          } />
-          <Route path="/projects/:id" element={<ProjectDetail />} />
-          <Route path="/login" element={<SignIn />} />
-          <Route element={<ProtectedRoute />}> 
-            <Route path="/dashboard" element={<DashboardHome />} />
-          </Route>
-        </Routes>
-      <Footer />
+      {!isDashboardOrLogin && <CursorFollower />}
+      {!isDashboardOrLogin && (
+        <a href="#portfolio" className="skip-link bg-stone-900 text-white px-4 py-2 text-sm font-medium">
+          Skip to content
+        </a>
+      )}
+      {!isDashboardOrLogin && (
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-[2px] bg-accent origin-left z-[100]"
+          style={{ scaleX }}
+          aria-hidden="true"
+        />
+      )}
+      {!isDashboardOrLogin && <Navbar />}
+      <Routes>
+        <Route path="/" element={
+          <>
+            <Hero />
+            <Marquee />
+            <About />
+            <ConstructionSequence />
+            <StudioTeam />
+            <TrustedBy />
+            <Sectors />
+            <Services />
+            <ParallaxQuote />
+            <Portfolio />
+            <Process />
+            <BespokeProjectPlanner />
+            <Testimonials />
+            <CTABanner />
+            <Contact />
+          </>
+        } />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
+        <Route path="/login" element={<SignIn />} />
+        <Route element={<ProtectedRoute />}> 
+          <Route path="/dashboard" element={<DashboardHome />} />
+        </Route>
+      </Routes>
+      {!isDashboardOrLogin && <Footer />}
       <ScrollToTop />
     </>
   );
