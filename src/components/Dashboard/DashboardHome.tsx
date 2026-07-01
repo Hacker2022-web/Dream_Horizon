@@ -14,17 +14,33 @@ import {
   FileText,
   LayoutDashboard,
   SlidersHorizontal,
+  Users,
 } from 'lucide-react';
-import { deleteProject, subscribeProjects, signOut, getLocalProjects, auth } from '../../lib/firebase';
+import {
+  deleteProject,
+  subscribeProjects,
+  signOut,
+  getLocalProjects,
+  auth,
+  deleteTeamMember,
+  subscribeTeam,
+  getLocalTeam,
+} from '../../lib/firebase';
 import { ProjectForm } from './ProjectForm';
 import { SiteContentEditor } from './SiteContentEditor';
+import { TeamForm } from './TeamForm';
 
-type Tab = 'projects' | 'content';
+type Tab = 'projects' | 'team' | 'content';
 
 export const DashboardHome = () => {
   const [projects, setProjects] = useState<any[]>(() => getLocalProjects());
   const [editing, setEditing] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  const [team, setTeam] = useState<any[]>(() => getLocalTeam());
+  const [editingTeam, setEditingTeam] = useState<any | null>(null);
+  const [showTeamForm, setShowTeamForm] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [tab, setTab] = useState<Tab>('projects');
@@ -36,8 +52,12 @@ export const DashboardHome = () => {
   };
 
   useEffect(() => {
-    const unsub = subscribeProjects(setProjects);
-    return () => unsub();
+    const unsubProjects = subscribeProjects(setProjects);
+    const unsubTeam = subscribeTeam(setTeam);
+    return () => {
+      unsubProjects();
+      unsubTeam();
+    };
   }, []);
 
   const openCreate = () => {
@@ -51,6 +71,18 @@ export const DashboardHome = () => {
   };
 
   const closeForm = () => setShowForm(false);
+
+  const openCreateTeam = () => {
+    setEditingTeam(null);
+    setShowTeamForm(true);
+  };
+
+  const openEditTeam = (member: any) => {
+    setEditingTeam(member);
+    setShowTeamForm(true);
+  };
+
+  const closeTeamForm = () => setShowTeamForm(false);
 
   // Statistics calculation
   const totalProjects = projects.length;
@@ -72,8 +104,9 @@ export const DashboardHome = () => {
 
   const adminEmail = auth.currentUser?.email ?? 'Unknown session';
 
-  const tabs: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+  const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: 'projects', label: 'Projects', icon: LayoutDashboard },
+    { id: 'team', label: 'Team Members', icon: Users },
     { id: 'content', label: 'Site Content', icon: SlidersHorizontal },
   ];
 
@@ -105,6 +138,14 @@ export const DashboardHome = () => {
                 className="btn-accent flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold tracking-wider uppercase shadow-lg shadow-accent/10 hover:shadow-accent/20 hover:-translate-y-0.5 transition-all duration-300"
               >
                 <Plus size={15} /> Add Project
+              </button>
+            )}
+            {tab === 'team' && (
+              <button
+                onClick={openCreateTeam}
+                className="btn-accent flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold tracking-wider uppercase shadow-lg shadow-accent/10 hover:shadow-accent/20 hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <Plus size={15} /> Add Member
               </button>
             )}
             <button
@@ -140,7 +181,7 @@ export const DashboardHome = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          {tab === 'projects' ? (
+          {tab === 'projects' && (
             <motion.div
               key="projects"
               initial={{ opacity: 0, y: 10 }}
@@ -298,7 +339,102 @@ export const DashboardHome = () => {
                 </div>
               )}
             </motion.div>
-          ) : (
+          )}
+
+          {tab === 'team' && (
+            <motion.div
+              key="team"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-8"
+            >
+              {/* Team list header */}
+              <div className="flex justify-between items-center bg-stone-900/25 border border-stone-800/40 rounded-2xl p-5">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-serif font-bold text-white">Active Studio Team</h3>
+                  <p className="text-xs text-stone-500 font-medium">Manage architects, designers, and engineers displayed on the website.</p>
+                </div>
+                <button
+                  onClick={openCreateTeam}
+                  className="btn-accent flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold tracking-wider uppercase shadow-lg shadow-accent/10 hover:shadow-accent/20 hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <Plus size={13} /> Add Member
+                </button>
+              </div>
+
+              {/* Team Cards Grid */}
+              <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {team.map((member) => (
+                    <motion.div
+                      key={member.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.4 }}
+                      className="card-lift group relative rounded-2xl overflow-hidden bg-stone-900/50 border border-stone-800/80 hover:border-stone-700/80 flex flex-col justify-between shadow-xl"
+                    >
+                      <div>
+                        <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-950">
+                          <img
+                            src={member.image}
+                            alt={member.name}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+
+                        <div className="p-5 space-y-1.5">
+                          <h3 className="font-serif text-lg font-bold text-white leading-snug group-hover:text-accent transition-colors">
+                            {member.name}
+                          </h3>
+                          <p className="text-xs text-stone-400 font-mono tracking-wider uppercase">
+                            / {member.role} /
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-5 pt-0 flex gap-2">
+                        <button
+                          onClick={() => openEditTeam(member)}
+                          className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-stone-800 bg-stone-900 hover:bg-stone-800 hover:border-stone-700 px-3 py-2 text-xs font-semibold text-stone-300 hover:text-white transition-all duration-200"
+                        >
+                          <Edit2 size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this team member?')) {
+                              deleteTeamMember(member.id);
+                            }
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-red-950/20 bg-red-950/20 hover:bg-red-900/35 px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 transition-all duration-200"
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Empty state */}
+              {team.length === 0 && (
+                <div className="text-center py-20 bg-stone-900/20 border border-dashed border-stone-800 rounded-2xl space-y-3">
+                  <p className="text-stone-500 text-sm">No team members registered.</p>
+                  <button
+                    onClick={openCreateTeam}
+                    className="text-accent text-xs font-bold hover:underline tracking-wider uppercase"
+                  >
+                    Add first member
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {tab === 'content' && (
             <motion.div
               key="content"
               initial={{ opacity: 0, y: 10 }}
@@ -314,6 +450,7 @@ export const DashboardHome = () => {
 
       <AnimatePresence>
         {showForm && <ProjectForm initialData={editing} onClose={closeForm} />}
+        {showTeamForm && <TeamForm initialData={editingTeam} onClose={closeTeamForm} />}
       </AnimatePresence>
     </section>
   );

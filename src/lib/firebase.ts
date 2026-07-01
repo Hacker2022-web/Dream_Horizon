@@ -231,3 +231,126 @@ export const deleteProject = async (id: string) => {
   saveLocalProjects(filtered);
   notifyProjectListeners();
 };
+
+// --- Team Management ---
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  image: string; // Base64 or URL
+  createdAt: number;
+}
+
+const defaultTeam: TeamMember[] = [
+  {
+    id: '1',
+    name: 'Aarav Mehta',
+    role: 'Principal Architect & Founder',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    createdAt: Date.now() - 400000
+  },
+  {
+    id: '2',
+    name: 'Meera Sen',
+    role: 'Director of Interior Design',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    createdAt: Date.now() - 300000
+  },
+  {
+    id: '3',
+    name: 'Kabir Malhotra',
+    role: 'Lead Structural Engineer',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    createdAt: Date.now() - 200000
+  },
+  {
+    id: '4',
+    name: 'Ananya Roy',
+    role: 'BIM & Sustainability Lead',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    createdAt: Date.now() - 100000
+  }
+];
+
+export const getLocalTeam = (): TeamMember[] => {
+  const stored = localStorage.getItem('dreamhorizon_team');
+  if (!stored) {
+    localStorage.setItem('dreamhorizon_team', JSON.stringify(defaultTeam));
+    return defaultTeam;
+  }
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return defaultTeam;
+  }
+};
+
+const saveLocalTeam = (team: TeamMember[]) => {
+  localStorage.setItem('dreamhorizon_team', JSON.stringify(team));
+};
+
+type TeamCallback = (team: TeamMember[]) => void;
+const teamListeners = new Set<TeamCallback>();
+
+export const subscribeTeam = (callback: TeamCallback) => {
+  teamListeners.add(callback);
+  callback(getLocalTeam());
+  return () => {
+    teamListeners.delete(callback);
+  };
+};
+
+const notifyTeamListeners = () => {
+  const team = getLocalTeam();
+  teamListeners.forEach(cb => cb(team));
+};
+
+export const createTeamMember = async (
+  member: Omit<TeamMember, 'id' | 'image' | 'createdAt'>,
+  file: File
+) => {
+  await new Promise(resolve => setTimeout(resolve, 300)); // Simulating network
+  const image = await fileToDataUrl(file);
+  const team = getLocalTeam();
+  const newMember: TeamMember = {
+    ...member,
+    id: Date.now().toString(),
+    image,
+    createdAt: Date.now()
+  };
+  team.push(newMember);
+  saveLocalTeam(team);
+  notifyTeamListeners();
+};
+
+export const updateTeamMember = async (
+  id: string,
+  updates: Partial<Omit<TeamMember, 'id' | 'image' | 'createdAt'>>,
+  newFile?: File
+) => {
+  await new Promise(resolve => setTimeout(resolve, 300)); // Simulating network
+  const team = getLocalTeam();
+  const idx = team.findIndex(m => m.id === id);
+  if (idx === -1) throw new Error('Team member not found');
+
+  let image = team[idx].image;
+  if (newFile) {
+    image = await fileToDataUrl(newFile);
+  }
+
+  team[idx] = {
+    ...team[idx],
+    ...updates,
+    image
+  };
+  saveLocalTeam(team);
+  notifyTeamListeners();
+};
+
+export const deleteTeamMember = async (id: string) => {
+  const team = getLocalTeam();
+  const filtered = team.filter(m => m.id !== id);
+  saveLocalTeam(filtered);
+  notifyTeamListeners();
+};

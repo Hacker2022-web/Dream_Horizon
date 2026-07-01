@@ -8,7 +8,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Float, MeshDistortMaterial, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { HashRouter, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
-import { subscribeProjects, auth, onAuthStateChanged, getLocalProjects } from './lib/firebase';
+import { subscribeProjects, auth, onAuthStateChanged, getLocalProjects, subscribeTeam, getLocalTeam } from './lib/firebase';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -740,6 +740,12 @@ const About = () => {
 // --- Studio Team ---
 const StudioTeam = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [team, setTeam] = useState<any[]>(() => getLocalTeam());
+
+  useEffect(() => {
+    const unsub = subscribeTeam(setTeam);
+    return () => unsub();
+  }, []);
 
   useGSAP(() => {
     // Left column texts reveal
@@ -771,33 +777,6 @@ const StudioTeam = () => {
       ease: "power3.out"
     });
   }, { scope: containerRef });
-
-  const team = [
-    {
-      name: 'Aarav Mehta',
-      role: 'Principal Architect & Founder',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      offsetClass: 'mt-0'
-    },
-    {
-      name: 'Meera Sen',
-      role: 'Director of Interior Design',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      offsetClass: 'md:mt-16'
-    },
-    {
-      name: 'Kabir Malhotra',
-      role: 'Lead Structural Engineer',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      offsetClass: 'mt-0'
-    },
-    {
-      name: 'Ananya Roy',
-      role: 'BIM & Sustainability Lead',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-      offsetClass: 'md:mt-16'
-    }
-  ];
 
   return (
     <section ref={containerRef} className="py-28 bg-[#F9F8F6] relative overflow-hidden">
@@ -842,42 +821,45 @@ const StudioTeam = () => {
           {/* Right Column: Staggered Team Grid */}
           <div className="lg:col-span-8">
             <div className="team-grid grid md:grid-cols-2 gap-8 items-start">
-              {team.map((member, index) => (
-                <div 
-                  key={index}
-                  className={`team-card bg-white rounded-[2rem] p-4 border border-stone-200/50 shadow-sm hover:shadow-2xl transition-all duration-700 hover:-translate-y-1 ${member.offsetClass}`}
-                >
-                  {/* Image wrapper with cutout */}
-                  <div className="relative aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-stone-100 group">
-                    <img 
-                      src={member.image} 
-                      alt={member.name}
-                      loading="lazy"
-                      className="w-full h-full object-cover grayscale contrast-[1.05] hover:grayscale-0 transition-all duration-1000 scale-100 hover:scale-105"
-                    />
-                    {/* Cutout bottom-left overlay */}
-                    <div 
-                      className="absolute bottom-0 left-0 w-16 h-16 bg-white rounded-tr-3xl flex items-center justify-center pointer-events-auto"
-                    >
-                      <button 
-                        onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="w-10 h-10 rounded-full bg-stone-950 text-white flex items-center justify-center hover:bg-accent hover:text-white transition-all duration-500 shadow-md hover:scale-105"
-                        aria-label={`Contact ${member.name}`}
+              {team.map((member, index) => {
+                const offsetClass = index % 2 === 1 ? 'md:mt-16' : 'mt-0';
+                return (
+                  <div 
+                    key={member.id}
+                    className={`team-card bg-white rounded-[2rem] p-4 border border-stone-200/50 shadow-sm hover:shadow-2xl transition-all duration-700 hover:-translate-y-1 ${offsetClass}`}
+                  >
+                    {/* Image wrapper with cutout */}
+                    <div className="relative aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-stone-100 group">
+                      <img 
+                        src={member.image} 
+                        alt={member.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover grayscale contrast-[1.05] hover:grayscale-0 transition-all duration-1000 scale-100 hover:scale-105"
+                      />
+                      {/* Cutout bottom-left overlay */}
+                      <div 
+                        className="absolute bottom-0 left-0 w-16 h-16 bg-white rounded-tr-3xl flex items-center justify-center pointer-events-auto"
                       >
-                        <ArrowRight size={14} className="-rotate-45" />
-                      </button>
+                        <button 
+                          onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                          className="w-10 h-10 rounded-full bg-stone-950 text-white flex items-center justify-center hover:bg-accent hover:text-white transition-all duration-500 shadow-md hover:scale-105"
+                          aria-label={`Contact ${member.name}`}
+                        >
+                          <ArrowRight size={14} className="-rotate-45" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Info Row below cutout */}
+                    <div className="pt-6 pb-2 px-4 space-y-1">
+                      <h3 className="text-lg font-serif font-bold text-stone-900">{member.name}</h3>
+                      <p className="text-[0.65rem] text-stone-400 font-mono tracking-wider font-semibold uppercase">
+                        / {member.role} /
+                      </p>
                     </div>
                   </div>
-
-                  {/* Info Row below cutout */}
-                  <div className="pt-6 pb-2 px-4 space-y-1">
-                    <h3 className="text-lg font-serif font-bold text-stone-900">{member.name}</h3>
-                    <p className="text-[0.65rem] text-stone-400 font-mono tracking-wider font-semibold uppercase">
-                      / {member.role} /
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
