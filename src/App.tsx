@@ -9,6 +9,7 @@ import { Environment, Float, MeshDistortMaterial, RoundedBox } from '@react-thre
 import * as THREE from 'three';
 import { HashRouter, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { subscribeProjects, auth, onAuthStateChanged, getLocalProjects, subscribeTeam, getLocalTeam } from './lib/firebase';
+import { resolveAssetUrl } from './lib/assets';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -667,7 +668,7 @@ const About = () => {
           <div className="relative about-image-wrapper">
             <div className="aspect-[3/4] overflow-hidden bg-stone-200 relative shadow-premium">
               <img
-                src={about.image}
+                src={resolveAssetUrl(about.image)}
                 alt={`${about.heading1} ${about.heading2}`}
                 loading="lazy"
                 className="w-full h-full object-cover about-parallax-img"
@@ -830,8 +831,8 @@ const StudioTeam = () => {
                   >
                     {/* Image wrapper with cutout */}
                     <div className="relative aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-stone-100 group">
-                      <img 
-                        src={member.image} 
+                      <img
+                        src={resolveAssetUrl(member.image)}
                         alt={member.name}
                         loading="lazy"
                         className="w-full h-full object-cover grayscale contrast-[1.05] hover:grayscale-0 transition-all duration-1000 scale-100 hover:scale-105"
@@ -925,7 +926,7 @@ const Sectors = () => {
               className="sector-card group relative aspect-[3/4] overflow-hidden bg-stone-900 rounded-2xl border border-stone-800/50 hover:border-accent/30 transition-all duration-700 cursor-pointer"
             >
               <img
-                src={sector.image}
+                src={resolveAssetUrl(sector.image)}
                 alt={sector.title}
                 loading="lazy"
                 className="w-full h-full object-cover transition-all duration-[1000ms] group-hover:scale-110"
@@ -1161,7 +1162,7 @@ const Portfolio = () => {
                   className="group relative aspect-[4/5] overflow-hidden bg-stone-200 rounded-2xl shadow-premium hover:shadow-2xl transition-all duration-700 cursor-pointer"
                 >
                   <img
-                     src={project.imageUrl ?? project.image}
+                     src={resolveAssetUrl(project.imageUrl ?? project.image)}
                     alt={project.title}
                     loading="lazy"
                     className="w-full h-full object-cover transition-all duration-[1200ms] group-hover:scale-110"
@@ -2119,7 +2120,7 @@ const ProjectDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <img src={(project as any).imageUrl ?? project.image} alt={project.title} loading="lazy" className="w-full h-auto max-h-[80vh] object-cover bg-stone-200" />
+            <img src={resolveAssetUrl((project as any).imageUrl ?? project.image)} alt={project.title} loading="lazy" className="w-full h-auto max-h-[80vh] object-cover bg-stone-200" />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: 30 }}
@@ -2280,7 +2281,7 @@ const ParallaxQuote = () => {
     <section ref={containerRef} className="relative h-[60vh] md:h-[70vh] overflow-hidden flex items-center justify-center noise-overlay">
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={quote.image}
+          src={resolveAssetUrl(quote.image)}
           alt=""
           loading="lazy"
           className="w-full h-[130%] object-cover quote-parallax-img"

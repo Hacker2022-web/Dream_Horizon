@@ -309,13 +309,17 @@ export const subscribeSiteContent = (callback: ContentCallback) => {
 
   const docRef = doc(db, 'site_config', 'main');
   const unsubscribe = onSnapshot(docRef, (docSnap) => {
-    // Only override local data when Firestore actually has the document
+    const fromCache = docSnap.metadata.fromCache;
     if (docSnap.exists()) {
       const content = mergeWithDefaults(docSnap.data() as SiteContent);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
       callback(content);
+    } else if (!fromCache) {
+      // Document was reset/deleted on the server — fall back to defaults
+      // everywhere (ignore a cache-only miss during a brief disconnect).
+      localStorage.removeItem(STORAGE_KEY);
+      callback(defaultContent);
     }
-    // If doc doesn't exist, keep using localStorage (don't seed/overwrite)
   }, (_error) => {
     // Firestore unavailable — localStorage already shown
   });

@@ -26,6 +26,7 @@ import {
   subscribeTeam,
   getLocalTeam,
 } from '../../lib/firebase';
+import { resolveAssetUrl } from '../../lib/assets';
 import { ProjectForm } from './ProjectForm';
 import { SiteContentEditor } from './SiteContentEditor';
 import { TeamForm } from './TeamForm';
@@ -270,7 +271,7 @@ export const DashboardHome = () => {
                       <div>
                         <div className="relative h-48 w-full overflow-hidden bg-stone-950">
                           <img
-                            src={p.imageUrl || p.image}
+                            src={resolveAssetUrl(p.imageUrl || p.image)}
                             alt={p.title}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
@@ -380,7 +381,7 @@ export const DashboardHome = () => {
                       <div>
                         <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-950">
                           <img
-                            src={member.image}
+                            src={resolveAssetUrl(member.image)}
                             alt={member.name}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />

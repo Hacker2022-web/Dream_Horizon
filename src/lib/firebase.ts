@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import {
+  getAuth,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  type User as FirebaseUser,
+} from 'firebase/auth';
 
 // Initialize real Firebase App using credentials from config
 const firebaseConfig = {
@@ -15,74 +22,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-export interface User {
-  uid: string;
-  email: string;
-  emailVerified: boolean;
-}
+// Real Firebase Authentication. The signed-in user's ID token is what lets
+// Firestore writes pass the security rules, so admin changes now persist to the
+// cloud for every visitor instead of only living in this browser's localStorage.
+export const auth = getAuth(app);
 
-// Current user state
-let currentUser: User | null = (() => {
-  try {
-    const stored = localStorage.getItem('dreamhorizon_admin_user');
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-})();
+export type User = FirebaseUser;
 
-export const auth = {
-  get currentUser() {
-    return currentUser;
-  }
-};
-
-type AuthCallback = (user: User | null) => void;
-const authListeners = new Set<AuthCallback>();
-
-export const onAuthStateChanged = (authObj: typeof auth, callback: AuthCallback) => {
-  authListeners.add(callback);
-  callback(currentUser);
-  return () => {
-    authListeners.delete(callback);
-  };
-};
-
-const notifyAuthListeners = () => {
-  currentUser = (() => {
-    try {
-      const stored = localStorage.getItem('dreamhorizon_admin_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  })();
-  authListeners.forEach(cb => cb(currentUser));
-};
+// Re-export Firebase's listener directly; callers use onAuthStateChanged(auth, cb).
+export const onAuthStateChanged = firebaseOnAuthStateChanged;
 
 export const loginWithEmail = async (email: string, password: string) => {
-  // Simulating small network delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  if (email === 'admin@gmail.com' && password === 'admin') {
-    const user: User = {
-      uid: 'admin-user-id',
-      email: 'admin@gmail.com',
-      emailVerified: true
-    };
-    localStorage.setItem('dreamhorizon_admin_user', JSON.stringify(user));
-    notifyAuthListeners();
-  } else {
-    throw new Error('Invalid email or password');
+  try {
+    await signInWithEmailAndPassword(auth, email.trim(), password);
+  } catch (err: any) {
+    const code: string = err?.code ?? '';
+    if (
+      code === 'auth/invalid-credential' ||
+      code === 'auth/wrong-password' ||
+      code === 'auth/user-not-found'
+    ) {
+      throw new Error('Invalid email or password.');
+    }
+    if (code === 'auth/invalid-email') {
+      throw new Error('Please enter a valid email address.');
+    }
+    if (code === 'auth/too-many-requests') {
+      throw new Error('Too many attempts. Please wait a moment and try again.');
+    }
+    if (code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your connection and try again.');
+    }
+    throw new Error('Sign in failed. Please try again.');
   }
 };
 
-export const signOut = async (_authObj?: any) => {
-  localStorage.removeItem('dreamhorizon_admin_user');
-  notifyAuthListeners();
+export const signOut = async () => {
+  await firebaseSignOut(auth);
 };
 
 export const loginWithGoogle = async () => {
-  alert('Google Login is not supported in offline local mode.');
+  alert('Google Login is not enabled. Please sign in with your email and password.');
 };
 
 // Projects management
@@ -138,16 +118,16 @@ export const subscribeProjects = (callback: ProjectCallback) => {
 
   const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    // Only override local data when Firestore actually has content
-    if (!snapshot.empty) {
-      const items: Project[] = [];
-      snapshot.forEach((d) => {
-        items.push({ id: d.id, ...d.data() } as Project);
-      });
-      saveLocalProjects(items);
-      callback(items);
-    }
-    // If Firestore is empty, keep using localStorage (don't seed/overwrite)
+    // Ignore an empty result that comes only from the offline cache, so a brief
+    // disconnect never wipes content. A real server response is authoritative —
+    // even when empty (admin deleted everything) — so deletes sync everywhere.
+    if (snapshot.empty && snapshot.metadata.fromCache) return;
+    const items: Project[] = [];
+    snapshot.forEach((d) => {
+      items.push({ id: d.id, ...d.data() } as Project);
+    });
+    saveLocalProjects(items);
+    callback(items);
   }, (_error) => {
     // Firestore unavailable — localStorage already shown, nothing to do
   });
@@ -331,14 +311,15 @@ export const subscribeTeam = (callback: TeamCallback) => {
 
   const q = query(collection(db, 'team'), orderBy('createdAt', 'asc'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    if (!snapshot.empty) {
-      const items: TeamMember[] = [];
-      snapshot.forEach((d) => {
-        items.push({ id: d.id, ...d.data() } as TeamMember);
-      });
-      saveLocalTeam(items);
-      callback(items);
-    }
+    // Ignore an empty result that comes only from the offline cache; a real
+    // server response (even empty) is authoritative so deletes sync everywhere.
+    if (snapshot.empty && snapshot.metadata.fromCache) return;
+    const items: TeamMember[] = [];
+    snapshot.forEach((d) => {
+      items.push({ id: d.id, ...d.data() } as TeamMember);
+    });
+    saveLocalTeam(items);
+    callback(items);
   }, (_error) => {
     // Firestore unavailable — localStorage already shown
   });

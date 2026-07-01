@@ -3,8 +3,9 @@ import { auth, onAuthStateChanged } from '../../lib/firebase';
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
-// Replace with the real admin email(s) you want to allow
-const ADMIN_EMAIL = 'admin@gmail.com';
+// The admin email allowed into the dashboard. Must match the account created in
+// Firebase Authentication and the isAdmin() check in firestore.rules.
+const ADMIN_EMAIL = 'dreamhorizonconcepts@gmail.com';
 
 const LoadingScreen = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950">
